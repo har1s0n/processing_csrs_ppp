@@ -9,8 +9,8 @@ class Coordinates:
     """
     A class for representing station coordinates
     """
-    name: str
-    dt: datetime
+    name: str = str()
+    dt: datetime = datetime.datetime.now()
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
@@ -116,7 +116,7 @@ class RequestHandler:
     # Section for working with the scenario_station_tb table
     def insert_station(self, scenario_id: int, station_id: str, user_id: int = 1, station_config_tb: int = 1) -> None:
         """
-        Deleting stations from table
+        Inserting a station into a table
 
         Parameters
         ----------

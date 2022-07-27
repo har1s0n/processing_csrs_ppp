@@ -6,7 +6,6 @@ import os
 import shutil
 import mysqldb
 import configparser
-from typing import Type
 import request_handler
 
 
@@ -32,13 +31,12 @@ def path_processing() -> bool:
 
 
 def extracting_files() -> None:
-    archive = input_data
     try:
-        with zipfile.ZipFile(archive, 'r') as zip_file:
+        with zipfile.ZipFile(input_data, 'r') as zip_file:
             zip_file.extractall(os.path.dirname(input_data) + os_dependency_slash() + 'tmp_')
             print(f"Unpacking of the archive has been successfully completed.")
     except OSError:
-        print(f"Could not open/read file: {archive}")
+        print(f"Could not open/read file: {input_data}")
         exit()
 
 
@@ -48,7 +46,7 @@ def conversion_decimal_deg(raw_data: str) -> float:
     minutes = int(raw_data_split[1])
     seconds = float(raw_data_split[2])
     if degrees >= 0:
-        decimal = degrees + float(minutes) / 60 + float(seconds) / 3600
+        decimal = degrees + (float(minutes) / 60) + (float(seconds) / 3600)
     else:
         decimal = degrees - float(minutes) / 60 - float(seconds) / 3600
 
@@ -68,45 +66,42 @@ def custom_separator(content: str) -> list:
     return result
 
 
-def get_pos_data(file: str) -> Type[request_handler.Coordinates]:
-    result = request_handler.Coordinates
+def get_pos_data(file: str) -> request_handler.Coordinates:
+    result_pos_data = request_handler.Coordinates()
     with open(file) as f:
         pos_counter = 0
         for line in f:
             current_data = line.split()
             if pos_counter == 7:
                 break
-            if current_data[0].strip() == 'MKR':
-                result.name = current_data[1].strip().lower()
+            if current_data[0].strip() == 'RNX':
+                result_pos_data.name = current_data[1].strip()[:4]
             if current_data[0].strip() == 'BEG':
                 dt_string = ' '.join(current_data[1:])
-                result.dt = datetime.strptime(dt_string, "%Y-%m-%d %H:%M:%S.%f")
+                result_pos_data.dt = datetime.strptime(dt_string, "%Y-%m-%d %H:%M:%S.%f")
             if current_data[0].strip() == 'POS':
                 pos_counter += 1
                 if pos_counter == 1:
                     continue
-                current_pos_data = [i.strip() for i in line.split('  ') if i]
-                if len(current_pos_data) == 6:
-                    if current_pos_data[0].split()[1].lower() == 'lat':
-                        result.latitude = conversion_decimal_deg(current_pos_data[2])
-                    if current_pos_data[0].split()[1].lower() == 'lon':
-                        result.longitude = conversion_decimal_deg(current_pos_data[2])
-                else:
-                    if current_pos_data[1].split()[0].lower() == 'x':
-                        result.x = float(current_pos_data[3])
-                    if current_pos_data[1].split()[0].lower() == 'y':
-                        result.y = float(current_pos_data[3])
-                    if current_pos_data[1].split()[0].lower() == 'z':
-                        result.z = float(current_pos_data[3])
-    return result
+                if current_data[1].lower() == 'lat':
+                    result_pos_data.latitude = conversion_decimal_deg(' '.join(current_data[7:10]))
+                if current_data[1].lower() == 'lon':
+                    result_pos_data.longitude = conversion_decimal_deg(' '.join(current_data[7:10]))
+                if current_data[1].lower() == 'x':
+                    result_pos_data.x = float(current_data[5])
+                if current_data[1].lower() == 'y':
+                    result_pos_data.y = float(current_data[5])
+                if current_data[1].lower() == 'z':
+                    result_pos_data.z = float(current_data[5])
+    return result_pos_data
 
 
-def updating_list_stations(handler: 'request_handler.RequestHandler', stations: set) -> None:
+def updating_list_stations(handler: request_handler.RequestHandler, stations: set) -> None:
     # делаем delete из scenario_station_tb по id
     handler.delete_stations(int(scenario_id))
     for station in stations:
         # делаем insert
-        print("1")
+        handler.insert_station(int(scenario_id), station)
 
 
 def sending_data_database(records: list) -> None:
@@ -144,7 +139,6 @@ def parsing() -> list:
                     open(filename, 'wb').write(content)
                     # получение POS из файла
                     result.append(get_pos_data(filename))
-                    # удаление файла
                     try:
                         os.remove(filename)
                     except OSError as e:
@@ -180,7 +174,7 @@ if __name__ == '__main__':
 
     # Чтение config-файла
     config = configparser.ConfigParser(allow_no_value=True)
-    config.read('config/config.ini')
+    config.read('../config/config.ini')
     host = config['Database']['address']
     db_name = config['Database']['db_name']
     username = config['Database']['username']
@@ -196,7 +190,6 @@ if __name__ == '__main__':
                                        user_password=password, port=port)
     db_connection = database.create_connection_tunnel(ssh_host=ssh_host, ssh_port=ssh_port, ssh_username=ssh_user,
                                                       ssh_password=ssh_password)
-
     # запуск распаковки в tmp каталок
     extracting_files()
 
