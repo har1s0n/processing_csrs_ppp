@@ -131,3 +131,4 @@ dmypy.json
 # Pycharm
 .idea
 .idea/
+/processing_csrs_ppp/full_output.zip
