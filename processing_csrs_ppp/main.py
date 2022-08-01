@@ -96,8 +96,23 @@ def get_pos_data(file: str) -> request_handler.Coordinates:
     return result_pos_data
 
 
+def check_station_id(handler: request_handler.RequestHandler) -> bool:
+    if len(scenario_id) == 0:
+        print(f"Verification error scenario_id. "
+              f"You must specify the scenario_id in config.ini")
+        return False
+    selected_scenario_tb = handler.select_scenario(int(scenario_id))
+    if len(selected_scenario_tb) == 0:
+        print(f"Verification error scenario_id. "
+              f"Check the correctness of the specified.")
+        return False
+    return True
+
+
 def updating_list_stations(handler: request_handler.RequestHandler, stations: set) -> None:
-    # делаем delete из scenario_station_tb по id
+    if not check_station_id(handler):
+        return
+        # делаем delete из scenario_station_tb по id
     handler.delete_stations(int(scenario_id))
     for station in stations:
         # делаем insert

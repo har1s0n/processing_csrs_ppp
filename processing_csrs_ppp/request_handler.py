@@ -151,6 +151,27 @@ class RequestHandler:
         -------
         None
         """
-        delete_stations_query = f"DELETE FROM odtssw_paf.scenario_station_tb " \
+        delete_stations_query = f"DELETE " \
+                                f"FROM odtssw_paf.scenario_station_tb " \
                                 f"WHERE scenario_id='{scenario_id}';"
         requests.execute_write_query(self.connection, delete_stations_query)
+
+    # Section for working with the scenario_tb table
+    def select_scenario(self, scenario_id: int) -> list:
+        """
+        Getting a record from scenario_tb for a specific scenario ID
+
+        Parameters
+        ----------
+        scenario_id : int
+           Scenario identifier
+
+        Returns
+        -------
+        list()
+           A list of records from the database
+        """
+        select_scenario_tb_query = f"SELECT * " \
+                                   f"FROM odtssw_paf.scenario_tb " \
+                                   f"WHERE scenario_id='{scenario_id}';"
+        return requests.execute_read_query(self.connection, select_scenario_tb_query)
