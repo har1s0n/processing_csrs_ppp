@@ -132,3 +132,4 @@ dmypy.json
 .idea
 .idea/
 /processing_csrs_ppp/full_output.zip
+/config/
