@@ -181,7 +181,7 @@ if __name__ == '__main__':
     output_data = args.output
     flag_upd = args.update
 
-    if flag_upd.lower() in ['False', 'false', '0', 'f', 'n', 'no']:
+    if str(flag_upd).lower() in ['False', 'false', '0', 'f', 'n', 'no']:
         flag_upd = False
 
     if not path_processing():
